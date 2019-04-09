@@ -13,7 +13,7 @@ import { ApolloProvider } from 'react-apollo';
 const createApolloClient = (authToken) => {
   return new ApolloClient({
     link: new WebSocketLink({
-      uri: 'ws://backend.graphql-tutorials.org/v1alpha1/graphql',
+      uri: 'wss://backend.graphql-tutorials.org/v1alpha1/graphql',
       options: {
         reconnect: true,
         connectionParams: {
@@ -38,9 +38,9 @@ const App = ({auth}) => {
             <div className="col-xs-12 col-md-6 sliderMenu p-30">
               <TodoPrivateWrapper />
             </div>
-            {/* <div className="col-xs-12 col-md-6 sliderMenu p-30 bg-gray border-right">
+            <div className="col-xs-12 col-md-6 sliderMenu p-30 bg-gray border-right">
               <TodoPublicWrapper />
-            </div> */}
+            </div>
           </div>
           <div className="col-xs-12 col-md-3 p-left-right-0">
             <div className="col-xs-12 col-md-12 sliderMenu p-30 bg-gray">
