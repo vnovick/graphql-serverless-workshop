@@ -176,8 +176,134 @@ const createApolloClient = (authToken) => {
 const App = ({auth}) => {
   const client = createApolloClient(auth.idToken);
   return (
-  ...
- 
+    <ApolloProvider client={client}>
+      <div>
+        Your app
+      </div>
+    </ApolloProvider>
 ```
 
+--------
 
+### Add Personal Todos Query
+
+```
+import gql from 'graphql-tag';
+import {Query} from 'react-apollo';
+
+```
+- create GET_MY_TODOS query
+```
+const GET_MY_TODOS = gql`
+  query getMyTodos {
+    todos(where: { is_public: { _eq: false} }, order_by: { created_at: desc }) {
+      id
+      title
+      created_at
+      is_completed
+  }
+}`;
+```
+### Wrap with Query component and pass todos as props
+```
+  <Query query={GET_MY_TODOS}>
+    
+  </Query>
+```
+
+### Implement Add Todo mutation in TodoInput
+
+```
+const ADD_TODO = gql `
+  mutation ($todo: String!, $isPublic: Boolean!) {
+    insert_todos(objects: {title: $todo, is_public: $isPublic}) {
+      affected_rows
+      returning {
+        id
+        title
+        created_at
+        is_completed
+      }
+    }
+  }
+`;
+```
+
+> use Mutation component for that.
+- use `updateCache` to update our cache on success `update={updateCache}`:
+
+```
+const updateCache = (cache, {data}) => {
+    // If this is for the public feed, do nothing
+    if (isPublic) {
+      return null;
+    }
+
+    // Fetch the todos from the cache
+    const existingTodos = cache.readQuery({
+      query: GET_MY_TODOS
+    });
+
+    // Add the new todo to the cache
+    const newTodo = data.insert_todos.returning[0];
+    cache.writeQuery({
+      query: GET_MY_TODOS,
+      data: {todos: [newTodo, ...existingTodos.todos]}
+    });
+  };
+```
+
+add `resetInput` prop to clear and refocus your input
+
+```
+  const resetInput = () => {
+    setTodoInput('');
+    input.focus();
+  };
+```
+
+### Add ClearCompleted functionality
+ add optimistic response update to private todos when clearing todos. use clearCompleted callback
+
+```
+clearCompleted() {
+
+    // Remove all the todos that are completed
+    const CLEAR_COMPLETED = gql`
+      mutation clearCompleted {
+        delete_todos(where: {is_completed: {_eq: true}, is_public: {_eq: false}}) {
+          affected_rows
+        }
+      }
+    `;
+
+    this.client.mutate({
+      mutation: CLEAR_COMPLETED,
+      optimisticResponse: {},
+      update: (cache, {data}) => {
+        const existingTodos = cache.readQuery({ query: GET_MY_TODOS });
+        const newTodos = existingTodos.todos.filter(t => (!t.is_completed));
+        cache.writeQuery({query:GET_MY_TODOS, data: {todos: newTodos}});
+      }
+    });
+  }
+```
+
+# Handle Online users
+
+- Add setInterval for online user to ping server of being online with the following mutation
+
+```
+const UPDATE_LASTSEEN_MUTATION=gql`
+      mutation updateLastSeen ($now: timestamptz!) {
+        update_users(where: {}, _set: {last_seen: $now}) {
+          affected_rows
+        }
+      }`;
+    this.client.mutate({
+      mutation: UPDATE_LASTSEEN_MUTATION,
+      variables: {now: (new Date()).toISOString()}
+    });
+```
+
+- Wrap online users with Subscription component
