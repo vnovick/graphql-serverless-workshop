@@ -2,7 +2,7 @@
 
 ### Workshop structure:
 
-# Part 1 - App Overview
+# App Overview
 
 ## Frontend app overview
 
@@ -14,18 +14,18 @@
 
 - go to [graphiql.graphql](http://graphiql.graphql-tutorials.org/) to explore API
 
------
 
-# Part 2 - Setting up Hasura
+# Setting up Hasura
 
 - Go to [hasura.io](hasura.io)
 - Click on `Deploy to Heroku button`
 - Enter your app name
 - Click on Open app
 
-------
 
-# Excercise: Setup Hasura with the following data structure:
+## Excercise: 
+
+Setup Hasura with the following data structure:
 
 - todos table
   - id - integer - primary key 
@@ -54,3 +54,5 @@ CREATE OR REPLACE VIEW "public"."online_users" AS
 ```
 
 > relationships - object relationship user
+
+Egghead video for [reference](https://egghead.io/lessons/graphql-create-your-graphql-api-auto-generated-with-hasura): 
