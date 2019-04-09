@@ -138,3 +138,46 @@ exports.handler = (event, context, callback) => {
 };
 ```
 
+
+#Excercise:
+
+### Setup our client with Apollo:
+
+- `yarn add apollo-boost apollo-link-ws graphql react-apollo subscriptions-transport-ws`
+
+In src/components/App.js
+
+```javascript
+...
+
+import ApolloClient from 'apollo-client';
+import { WebSocketLink } from 'apollo-link-ws';
+import { InMemoryCache } from 'apollo-cache-inmemory';
+import { ApolloProvider } from 'react-apollo';
+
+const createApolloClient = (authToken) => {
+  return new ApolloClient({
+    link: new WebSocketLink({
+      uri: 'ws://backend.graphql-tutorials.org/v1alpha1/graphql',
+      options: {
+        reconnect: true,
+        connectionParams: {
+          headers: {
+            Authorization: `Bearer ${authToken}`
+          }
+        }
+      }
+    }),
+    cache: new InMemoryCache()
+  });
+};
+
+
+const App = ({auth}) => {
+  const client = createApolloClient(auth.idToken);
+  return (
+  ...
+ 
+```
+
+
