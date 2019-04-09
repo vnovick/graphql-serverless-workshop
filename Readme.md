@@ -1,4 +1,4 @@
-# Wellcome to Hasura Amsterdam workshop 
+# Wellcome to Hasura Amsterdam workshop
 
 ### Workshop structure:
 
@@ -14,7 +14,6 @@
 
 - go to [graphiql.graphql](http://graphiql.graphql-tutorials.org/) to explore API
 
-
 # Setting up Hasura
 
 - Go to [hasura.io](hasura.io)
@@ -22,13 +21,12 @@
 - Enter your app name
 - Click on Open app
 
-
-## Excercise: 
+## Excercise:
 
 Setup Hasura with the following data structure:
 
 - todos table
-  - id - integer - primary key 
+  - id - integer - primary key
   - title - text
   - is_completed - boolean
   - created_at - timestamp
@@ -36,17 +34,19 @@ Setup Hasura with the following data structure:
   - user_id - text - foreign key to users.id
 
 > relationships - object relationship user
+
 - users table
-  - id - primary key 
-  - name - text - nullable 
-  - created_at - text - now() 
-  - last_seen - text - now() 
+  - id - primary key
+  - name - text - nullable
+  - created_at - text - now()
+  - last_seen - text - now()
 
 > relationships - array relationship todos
 
-- online_users 
+- online_users
+
 ```
-CREATE OR REPLACE VIEW "public"."online_users" AS 
+CREATE OR REPLACE VIEW "public"."online_users" AS
  SELECT users.id,
     users.last_seen
    FROM users
@@ -55,8 +55,7 @@ CREATE OR REPLACE VIEW "public"."online_users" AS
 
 > relationships - object relationship user
 
-Egghead video for [reference](https://egghead.io/lessons/graphql-create-your-graphql-api-auto-generated-with-hasura): 
-
+Egghead video for [reference](https://egghead.io/lessons/graphql-create-your-graphql-api-auto-generated-with-hasura):
 
 ---
 
@@ -89,17 +88,17 @@ function(user, context, callback) {
 }
 
 ```
-- Setup JWT Secret env variable
-`HASURA_GRAPHQL_JWT_SECRET: {"type":"RS256", "key": "<the-certificate-data-in-one-line>"}`
-obtain config [here](https://hasura.io/jwt-config) for domain name `graphql-tutorials.auth0.com`
 
-- Auth solutions explained in detail [here](
-  https://dev.to/hasurahq/hasura-authentication-explained-2c95)
+- Setup JWT Secret env variable
+  `HASURA_GRAPHQL_JWT_SECRET: {"type":"RS256", "key": "<the-certificate-data-in-one-line>"}`
+  obtain config [here](https://hasura.io/jwt-config) for domain name `graphql-tutorials.auth0.com`
+
+- Auth solutions explained in detail [here](https://dev.to/hasurahq/hasura-authentication-explained-2c95)
 
 # Add event triggers and remote schemas
-  
+
 - Add starwars API Remote schema
-`https://graphql-bootcamp-swapi.herokuapp.com/`
+  `https://graphql-bootcamp-swapi.herokuapp.com/`
 
 - Add echo event trigger Lambda
 
@@ -138,8 +137,7 @@ exports.handler = (event, context, callback) => {
 };
 ```
 
-
-#Excercise:
+# Excercise:
 
 ### Setup our client with Apollo:
 
@@ -183,7 +181,7 @@ const App = ({auth}) => {
     </ApolloProvider>
 ```
 
---------
+---
 
 ### Add Personal Todos Query
 
@@ -192,7 +190,9 @@ import gql from 'graphql-tag';
 import {Query} from 'react-apollo';
 
 ```
+
 - create GET_MY_TODOS query
+
 ```
 const GET_MY_TODOS = gql`
   query getMyTodos {
@@ -204,10 +204,12 @@ const GET_MY_TODOS = gql`
   }
 }`;
 ```
+
 ### Wrap with Query component and pass todos as props
+
 ```
   <Query query={GET_MY_TODOS}>
-    
+
   </Query>
 ```
 
@@ -230,6 +232,7 @@ const ADD_TODO = gql `
 ```
 
 > use Mutation component for that.
+
 - use `updateCache` to update our cache on success `update={updateCache}`:
 
 ```
@@ -262,31 +265,70 @@ add `resetInput` prop to clear and refocus your input
   };
 ```
 
-### Add ClearCompleted functionality
- add optimistic response update to private todos when clearing todos. use clearCompleted callback
+### Add Remove and Toggle todo functionality
+
+add remove todo
 
 ```
-clearCompleted() {
+ const REMOVE_TODO = gql`
+  mutation removeTodo ($id: Int!) {
+    delete_todos(where: {id: {_eq: $id}}) {
+      affected_rows
+    }
+  }
 
-    // Remove all the todos that are completed
-    const CLEAR_COMPLETED = gql`
-      mutation clearCompleted {
-        delete_todos(where: {is_completed: {_eq: true}, is_public: {_eq: false}}) {
-          affected_rows
-        }
-      }
-    `;
-
-    this.client.mutate({
-      mutation: CLEAR_COMPLETED,
+const removeTodo = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    client.mutate({
+      mutation: REMOVE_TODO,
+      variables: {id: todo.id},
       optimisticResponse: {},
-      update: (cache, {data}) => {
+      update: (cache, {}) => {
         const existingTodos = cache.readQuery({ query: GET_MY_TODOS });
-        const newTodos = existingTodos.todos.filter(t => (!t.is_completed));
-        cache.writeQuery({query:GET_MY_TODOS, data: {todos: newTodos}});
+        const newTodos = existingTodos.todos.filter(t => (t.id !== todo.id));
+        cache.writeQuery({
+          query: GET_MY_TODOS,
+          data: {todos: newTodos}
+        });
       }
     });
-  }
+  };
+```
+
+- Add toggle todo
+
+```
+const TOGGLE_TODO = gql`
+    mutation toggleTodo ($id: Int!, $isCompleted: Boolean!) {
+      update_todos(where: {id: {_eq: $id}}, _set: {is_completed: $isCompleted}) {
+        affected_rows
+      }
+    }
+  `;
+
+  const toggleTodo = () => {
+    client.mutate({
+      mutation: TOGGLE_TODO,
+      variables: {id: todo.id, isCompleted: !todo.is_completed},
+      optimisticResponse: {},
+      update: (cache, {}) => {
+        const existingTodos = cache.readQuery({ query: GET_MY_TODOS });
+        const newTodos = existingTodos.todos.map(t => {
+          if (t.id === todo.id) {
+            return({...t, is_completed: !t.is_completed});
+          } else {
+            return t;
+          }
+        });
+        cache.writeQuery({
+          query: GET_MY_TODOS,
+          data: {todos: newTodos}
+        });
+      }
+    });
+  };
+
 ```
 
 # Handle Online users
