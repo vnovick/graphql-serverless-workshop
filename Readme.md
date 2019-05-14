@@ -1,4 +1,4 @@
-# Wellcome to Hasura Amsterdam workshop 
+# Wellcome to Architecting Scalable Serverless Architectures with GraphQL Api workshop
 
 ### Workshop structure:
 
@@ -12,7 +12,7 @@
 
 ## Backend overview
 
-- go to [graphiql.graphql](http://graphiql.graphql-tutorials.org/) to explore API
+- go to [graphiql.graphql](https://learn.hasura.io/graphql/graphiql) to explore API
 
 
 # Setting up Hasura
@@ -30,17 +30,17 @@ Setup Hasura with the following data structure:
 - todos table
   - id - integer - primary key 
   - title - text
-  - is_completed - boolean
+  - is_completed - boolean, default: false
   - created_at - timestamp
   - is_public - boolean
   - user_id - text - foreign key to users.id
 
 > relationships - object relationship user
 - users table
-  - id - primary key 
-  - name - text - nullable 
-  - created_at - text - now() 
-  - last_seen - text - now() 
+  - id - text - primary key 
+  - name - text 
+  - created_at - timestamp - now() 
+  - last_seen - timestamp - nullable
 
 > relationships - array relationship todos
 
